@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6. Sınıf Fen Bilimleri - Kuvvet Laboratuvarı - Eren Yıldız</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        body, html { width: 100%; height: 100%; overflow-x: hidden; background-color: #12181b; color: #fff; }
+
+        /* Ahşap Çerçeveli Okul Tahtası Teması */
+        .board-wrapper {
+            max-width: 1200px; margin: 20px auto; padding: 20px;
+            background: #4a2e18; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 15px rgba(0,0,0,0.8);
+            border: 12px solid #36200f; position: relative;
+        }
+
+        .chalkboard {
+            background: #1e3a29; border-radius: 10px; padding: 25px;
+            border: 3px solid #14281c; box-shadow: inset 0 0 100px rgba(0,0,0,0.7);
+            position: relative; min-height: 850px; display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* Tahta Başlığı */
+        .chalk-header {
+            text-align: center; border-bottom: 2px dashed rgba(255,255,255,0.25);
+            padding-bottom: 15px; position: relative;
+        }
+        .chalk-header h1 {
+            font-size: 30px; color: #e8f5e9; font-family: 'Permanent Marker', cursive, sans-serif;
+            letter-spacing: 1.5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+        .chalk-header p { font-size: 13px; color: #a5d6a7; margin-top: 5px; }
+
+        /* Modül Sekmeleri */
+        .tab-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.25);
+            color: #fff; padding: 10px 22px; border-radius: 25px; cursor: pointer;
+            font-size: 13.5px; font-weight: 600; transition: all 0.25s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+        .tab-btn.active { background: #81c784; color: #0d2818; border-color: #a5d6a7; box-shadow: 0 5px 15px rgba(129,199,132,0.4); }
+
+        /* İçerik Panelleri */
+        .tab-content { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: flex; }
+
+        /* SİMÜLATÖR ALANI */
+        .sim-container {
+            background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* Tahta Zemin ve Kütle */
+        .track-area {
+            height: 240px; background: rgba(0,0,0,0.4); border-radius: 12px;
+            position: relative; overflow: hidden; border-bottom: 8px solid #5d4037;
+            display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;
+        }
+        .wood-texture {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 8px; background: #8d6e63;
+        }
+
+        /* Tahta Blok (Cisim) */
+        .wooden-block {
+            width: 130px; height: 90px; background: linear-gradient(135deg, #d7ccc8, #a1887f);
+            border: 3px solid #4e342e; border-radius: 8px; position: absolute; bottom: 10px; left: calc(50% - 65px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.6); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-weight: 700; color: #3e2723;
+            transition: left 0.8s cubic-bezier(0.25, 1, 0.5, 1); z-index: 10;
+        }
+        .block-label { font-size: 14px; }
+        .block-mass { font-size: 11px; opacity: 0.8; }
+
+        /* KÜTLE İLE BİRLİKTE HAREKET EDEN KUVVET OKLARI */
+        .force-arrow-group {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            display: flex; align-items: center; pointer-events: none; transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .force-arrow-group.east { left: 100%; padding-left: 8px; flex-direction: row; }
+        .force-arrow-group.west { right: 100%; padding-right: 8px; flex-direction: row-reverse; }
+
+        .arrow-line { height: 6px; background: #ffca28; border-radius: 3px; position: relative; }
+        .arrow-head-east { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #ffca28; }
+        .arrow-head-west { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 12px solid #ffca28; }
+        .arrow-text { font-size: 12px; font-weight: 700; color: #fff3e0; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; border: 1px solid #ffca28; }
+
+        /* Net Kuvvet (R) Göstergesi */
+        .net-result-badge {
+            position: absolute; top: -45px; left: 50%; transform: translateX(-50%);
+            background: #d32f2f; color: #fff; padding: 4px 10px; border-radius: 12px;
+            font-size: 12px; font-weight: 700; border: 1.5px solid #ff8a80;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); white-space: nowrap;
+        }
+
+        /* Kontrol Paneli */
+        .controls-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+        }
+        .control-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .control-card h4 { font-size: 14px; color: #81c784; display: flex; align-items: center; gap: 6px; }
+        .input-row { display: flex; gap: 8px; align-items: center; font-size: 12px; color: #ccc; }
+        .input-row input {
+            width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px; outline: none;
+        }
+        .action-btn {
+            background: #2e7d32; color: #fff; border: none; padding: 8px 14px; border-radius: 6px;
+            cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.2s;
+        }
+        .action-btn:hover { background: #388e3c; }
+        .action-btn.reset { background: #c62828; }
+        .action-btn.reset:hover { background: #d32f2f; }
+
+        /* HESAPLAMA VE SONUÇ PANELERİ */
+        .calc-display {
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: #e0e0e0; }
+        .calc-value { font-weight: 700; color: #81c784; }
+
+        /* KUVVET SORU BANKASI İSTATİSTİK PANELI VE SORULAR */
+        .quiz-container {
+            background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+        }
+        .quiz-stats-bar {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+            padding: 12px; border-radius: 10px; text-align: center;
+        }
+        .stat-item { display: flex; flex-direction: column; gap: 3px; }
+        .stat-title { font-size: 11px; color: #aaa; }
+        .stat-num { font-size: 15px; font-weight: 700; color: #81c784; }
+
+        /* İlerleme Çubuğu (Progress Bar) */
+        .progress-bar-container {
+            width: 100%; height: 8px; background: rgba(255,255,255,0.1);
+            border-radius: 4px; overflow: hidden; margin-top: 5px;
+        }
+        .progress-bar-fill { height: 100%; background: #81c784; width: 0%; transition: width 0.3s ease; }
+
+        .question-card {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+        }
+        .question-text { font-size: 15px; color: #fff; line-height: 1.5; }
+        .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .option-btn {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+            color: #eee; padding: 12px 15px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; text-align: left; transition: all 0.2s;
+        }
+        .option-btn:hover { background: rgba(255,255,255,0.18); border-color: #81c784; }
+        .option-btn.correct { background: #2e7d32 !important; border-color: #a5d6a7 !important; color: #fff; }
+        .option-btn.wrong { background: #c62828 !important; border-color: #ef9a9a !important; color: #fff; }
+
+        .feedback-box {
+            padding: 12px 15px; border-radius: 8px; font-size: 13px; line-height: 1.4; display: none;
+        }
+        .feedback-box.correct { background: rgba(46, 125, 50, 0.3); border: 1px solid #81c784; color: #c8e6c9; }
+        .feedback-box.wrong { background: rgba(198, 40, 40, 0.3); border: 1px solid #ef9a9a; color: #ffcdd2; }
+
+        /* KONU ÖZETİ PANELI */
+        .summary-box {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px; padding: 20px; font-size: 13.5px; line-height: 1.6; color: #e0e0e0;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .summary-box h3 { color: #81c784; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+
+        /* Oluşturucu İmzası */
+        .creator-signature {
+            position: absolute; bottom: 15px; right: 20px;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px);
+            padding: 5px 14px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 11px; color: #81c784; font-weight: 600; letter-spacing: 0.5px; pointer-events: none;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="board-wrapper">
+        <div class="chalkboard">
+            <!-- Başlık -->
+            <div class="chalk-header">
+                <h1>6. SINIF KUVVET VE HAREKET LABORATUVARI</h1>
+                <p>Çoklu Kuvvet Hesaplama, Net Kuvvet Simülasyonu ve İnteraktif Soru Bankası</p>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('sim-tab')"><i class="fa-solid fa-flask"></i> Kuvvet Simülatörü</button>
+                    <button class="tab-btn" onclick="switchTab('quiz-tab')"><i class="fa-solid fa-list-check"></i> Soru Bankası (40 Soru)</button>
+                    <button class="tab-btn" onclick="switchTab('summary-tab')"><i class="fa-solid fa-book-open"></i> Konu Özeti</button>
+                </div>
+            </div>
+
+            <!-- MODÜL 1: KUVVET SİMÜLATÖRÜ -->
+            <div id="sim-tab" class="tab-content active">
+                <div class="sim-container">
+                    <!-- Hareket Alanı -->
+                    <div class="track-area">
+                        <div class="wood-texture"></div>
+
+                        <!-- Tahta Blok -->
+                        <div class="wooden-block" id="woodenBlock">
+                            <span class="block-label">CİSİM</span>
+                            <span class="block-mass">m = 5 kg</span>
+
+                            <!-- Net Kuvvet Etiketi -->
+                            <div class="net-result-badge" id="netBadge">R = 0 N (Dengede)</div>
+
+                            <!-- Doğu Kuvvetleri Grubu -->
+                            <div class="force-arrow-group east" id="eastGroup">
+                                <div class="arrow-text" id="eastText">0 N</div>
+                                <div class="arrow-line" id="eastLine" style="width: 20px;"></div>
+                                <div class="arrow-head-east"></div>
+                            </div>
+
+                            <!-- Batı Kuvvetleri Grubu -->
+                            <div class="force-arrow-group west" id="westGroup">
+                                <div class="arrow-text" id="westText">0 N</div>
+                                <div class="arrow-line" id="westLine" style="width: 20px;"></div>
+                                <div class="arrow-head-west"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kontrol Paneli -->
+                    <div class="controls-grid">
+                        <div class="control-card">
+                            <h4><i class="fa-solid fa-arrow-right" style="color:#ffca28;"></i> Doğu Yönü Kuvvetleri</h4>
+                            <div class="input-row">
+                                <span>F₁:</span>
+                                <input type="number" id="east1" value="15" min="0" max="100" oninput="applyForces()">
+                                <span>N</span>
+                            </div>
+                            <div class="input-row">
+                                <span>F₂:</span>
+                                <input type="number" id="east2" value="10" min="0" max="100" oninput="applyForces()">
+                                <span>N</span>
+                            </div>
+                        </div>
+
+                        <div class="control-card">
+                            <h4><i class="fa-solid fa-arrow-left" style="color:#ffca28;"></i> Batı Yönü Kuvvetleri</h4>
+                            <div class="input-row">
+                                <span>F₃:</span>
+                                <input type="number" id="west1" value="10" min="0" max="100" oninput="applyForces()">
+                                <span>N</span>
+                            </div>
+                            <div class="input-row">
+                                <span>F₄:</span>
+                                <input type="number" id="west2" value="5" min="0" max="100" oninput="applyForces()">
+                                <span>N</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hesaplama Ekranı -->
+                    <div class="calc-display">
+                        <div class="calc-row"><span>Doğu Kuvvetleri Toplamı (F₁ + F₂):</span><span class="calc-value" id="dispEast">25 N</span></div>
+                        <div class="calc-row"><span>Batı Kuvvetleri Toplamı (F₃ + F₄):</span><span class="calc-value" id="dispWest">15 N</span></div>
+                        <div class="calc-row"><span>Bileşke Kuvvet (R Net):</span><span class="calc-value" id="dispNet" style="color:#ffca28;">10 N (Doğu Yönünde)</span></div>
+                        <div class="calc-row"><span>Hareket Durumu:</span><span class="calc-value" id="dispState" style="color:#ef5350;">Dengelenmemiş Kuvvetler Etkisinde</span></div>
+                        <div style="margin-top:5px; text-align:right;">
+                            <button class="action-btn reset" onclick="resetSim()"><i class="fa-solid fa-rotate-right"></i> Değerleri Tamamen Sıfırla</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODÜL 2: SORU BANKASI, İLERLEME YÜZDESİ VE RASTGELE SORULAR -->
+            <div id="quiz-tab" class="tab-content">
+                <div class="quiz-container">
+                    
+                    <!-- Canlı İstatistik ve İlerleme Paneli -->
+                    <div class="quiz-stats-bar">
+                        <div class="stat-item">
+                            <span class="stat-title">İlerleme Yüzdesi</span>
+                            <span class="stat-num" id="statPercent">%0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-title">Doğru / Yanlış</span>
+                            <span class="stat-num"><span id="statCorrect" style="color:#81c784;">0</span> / <span id="statWrong" style="color:#ef5350;">0</span></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-title">Başarı Oranı</span>
+                            <span class="stat-num" id="statAccuracy">%0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-title">Soru Konumu</span>
+                            <span class="stat-num" id="statPosition">1 / 40</span>
+                        </div>
+                    </div>
+                    
+                    <!-- İlerleme Çubuğu -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressBarFill"></div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                        <span style="font-size:13px; color:#aaa;">Soru Bankası (Rastgele Sıralı)</span>
+                        <button class="action-btn reset" onclick="resetQuiz()" style="padding: 5px 12px; font-size:11px;"><i class="fa-solid fa-rotate-right"></i> Soruları Karıştır ve Yeniden Başlat</button>
+                    </div>
+
+                    <div class="question-card">
+                        <div class="question-text" id="questionText">Soru yükleniyor...</div>
+                        <div class="options-grid" id="optionsContainer"></div>
+                        <div class="feedback-box" id="feedbackBox"></div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <button class="action-btn" onclick="prevQuestion()"><i class="fa-solid fa-arrow-left"></i> Önceki Soru</button>
+                        <button class="action-btn" onclick="nextQuestion()">Sonraki Soru <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODÜL 3: KONU ÖZETİ -->
+            <div id="summary-tab" class="tab-content">
+                <div class="summary-box">
+                    <h3>1. Kuvvet Nedir ve Özellikleri Nelerdir?</h3>
+                    <p>Duran bir cismi hareket ettiren, hareket eden cismi durduran, cismin yönünü, hızını veya şeklini değiştiren etkiye <strong>kuvvet</strong> denir. Kuvvet "F" harfi ile gösterilir. Birimi <strong>Newton (N)</strong>'dur ve dinamometre ile ölçülür.</p>
+
+                    <h3>2. Kuvvetin 4 Temel Elemanı</h3>
+                    <p>• <strong>Uygulama Noktası:</strong> Kuvvetin cisme etki ettiği noktadır.<br>
+                    • <strong>Yönü:</strong> Doğu, Batı, Kuzey veya Güney yönleridir.<br>
+                    • <strong>Doğrultusu:</strong> Doğu-Batı doğrultusu veya Kuzey-Güney doğrultusudur.<br>
+                    • <strong>Büyüklüğü (Şiddeti):</strong> Kuvvetin N cinsinden sayısal değeridir.</p>
+
+                    <h3>3. Bileşke (Net) Kuvvet (R)</h3>
+                    <p>Bir cisme etki eden birden fazla kuvvetin yaptığı tek etkiye <strong>bileşke kuvvet (R)</strong> denir.<br>
+                    • <strong>Aynı Yönlü Kuvvetler:</strong> Toplanır. Yön değişmez.<br>
+                    • <strong>Zıt Yönlü Kuvvetler:</strong> Büyük kuvvetten küçük kuvvet çıkarılır. Yön büyük kuvvetin yönüdür.</p>
+
+                    <h3>4. Dengelenmiş ve Dengelenmemiş Kuvvetler</h3>
+                    <p>• <strong>Dengelenmiş Kuvvetler:</strong> Bileşke kuvvet sıfır ise (R = 0 N) cisim dengededir.<br>
+                    • <strong>Dengelenmemiş Kuvvetler:</strong> Bileşke kuvvet sıfırdan farklı ise (R > 0 N) cisim hızlanır veya yavaşlar.</p>
+                </div>
+            </div>
+
+            <!-- İMZA -->
+            <div class="creator-signature">Created by Eren Yıldız</div>
+        </div>
+    </div>
+
+    <script>
+        // Sekme Değiştirme
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // ==========================================
+        // SİMÜLATÖR MANTIĞI VE TAM TAMINA SIFIRLAMA
+        // ==========================================
+        function applyForces() {
+            const e1 = parseFloat(document.getElementById('east1').value) || 0;
+            const e2 = parseFloat(document.getElementById('east2').value) || 0;
+            const w1 = parseFloat(document.getElementById('west1').value) || 0;
+            const w2 = parseFloat(document.getElementById('west2').value) || 0;
+
+            const totalEast = e1 + e2;
+            const totalWest = w1 + w2;
+            const block = document.getElementById('woodenBlock');
+
+            document.getElementById('dispEast').innerText = totalEast + " N (F₁ + F₂)";
+            document.getElementById('dispWest').innerText = totalWest + " N (F₃ + F₄)";
+
+            const eastGroup = document.getElementById('eastGroup');
+            const eastLine = document.getElementById('eastLine');
+            const eastText = document.getElementById('eastText');
+            if(totalEast > 0) {
+                eastGroup.style.display = 'flex';
+                eastLine.style.width = Math.min(totalEast * 1.8, 80) + 'px';
+                eastText.innerText = totalEast + ' N';
+            } else {
+                eastGroup.style.display = 'none';
+            }
+
+            const westGroup = document.getElementById('westGroup');
+            const westLine = document.getElementById('westLine');
+            const westText = document.getElementById('westText');
+            if(totalWest > 0) {
+                westGroup.style.display = 'flex';
+                westLine.style.width = Math.min(totalWest * 1.8, 80) + 'px';
+                westText.innerText = totalWest + ' N';
+            } else {
+                westGroup.style.display = 'none';
+            }
+
+            const net = totalEast - totalWest;
+            const netBadge = document.getElementById('netBadge');
+            const dispNet = document.getElementById('dispNet');
+            const dispState = document.getElementById('dispState');
+
+            if(net === 0) {
+                netBadge.innerText = "R = 0 N (Dengede)";
+                netBadge.style.background = "#2e7d32";
+                dispNet.innerText = "0 N (Hareketsiz)";
+                dispNet.style.color = "#81c784";
+                dispState.innerText = "Dengelenmiş Kuvvetler Etkisinde";
+                dispState.style.color = "#81c784";
+                block.style.left = "calc(50% - 65px)";
+            } else if(net > 0) {
+                netBadge.innerText = "R = " + net + " N (Doğu)";
+                netBadge.style.background = "#d32f2f";
+                dispNet.innerText = net + " N (Doğu Yönünde)";
+                dispNet.style.color = "#ffca28";
+                dispState.innerText = "Dengelenmemiş Kuvvetler Etkisinde (Sağa Hareket)";
+                dispState.style.color = "#ef5350";
+                
+                const movePx = Math.min(net * 2.2, 160);
+                block.style.left = `calc(50% - 65px + ${movePx}px)`;
+            } else {
+                const absNet = Math.abs(net);
+                netBadge.innerText = "R = " + absNet + " N (Batı)";
+                netBadge.style.background = "#d32f2f";
+                dispNet.innerText = absNet + " N (Batı Yönünde)";
+                dispNet.style.color = "#ffca28";
+                dispState.innerText = "Dengelenmemiş Kuvvetler Etkisinde (Sola Hareket)";
+                dispState.style.color = "#ef5350";
+
+                const movePx = Math.min(absNet * 2.2, 160);
+                block.style.left = `calc(50% - 65px - ${movePx}px)`;
+            }
+        }
+
+        // DEĞERLERİ VE KUVVETLERİ TAMAMEN SIFIRLAMA
+        function resetSim() {
+            document.getElementById('east1').value = 0;
+            document.getElementById('east2').value = 0;
+            document.getElementById('west1').value = 0;
+            document.getElementById('west2').value = 0;
+            applyForces();
+        }
+
+        // ==========================================
+        // 40 SORULUK VERİ BANKASI
+        // ==========================================
+        const rawQuizData = [
+            { q: "1. Duran bir cisme etki eden net kuvvet sıfır (R = 0 N) ise cisim nasıl hareket eder?", opts: ["Hızlanır", "Yavaşlar", "Hareketsiz kalır", "Zıt yöne döner"], ans: 2, exp: "Net kuvvet sıfır ise dengelenmiş kuvvetler etkisindedir. Duran cisim durmaya devam eder." },
+            { q: "2. Doğu yönünde 15 N ve Doğu yönünde 10 N iki kuvvetin bileşkesi (R) kaç N'dur?", opts: ["5 N Doğu", "25 N Doğu", "25 N Batı", "5 N Batı"], ans: 1, exp: "Aynı yönlü kuvvetler toplanır: 15 + 10 = 25 N Doğu." },
+            { q: "3. Doğu yönünde 30 N, Batı yönünde 12 N kuvvet etki eden bir cismin net kuvveti nedir?", opts: ["18 N Doğu", "42 N Doğu", "18 N Batı", "42 N Batı"], ans: 0, exp: "Zıt yönlü kuvvetler çıkarılır: 30 - 12 = 18 N Doğu." },
+            { q: "4. Kuvveti ölçen aletin adı nedir?", opts: ["Termometre", "Barometre", "Dinamometre", "Eşit kollu terazi"], ans: 2, exp: "Kuvvet dinamometre ile ölçülür." },
+            { q: "5. Kuvvetin SI sistemindeki birimi nedir?", opts: ["Kilogram (kg)", "Newton (N)", "Metre (m)", "Joule (J)"], ans: 1, exp: "Kuvvet birimi Newton (N)'dur." },
+            { q: "6. Aşağıdakilerden hangisi dengelenmiş kuvvetlerin etkisindedir?", opts: ["Hızlanan araba", "Fren yapan otobüs", "Masada duran kitap", "Yokuştan yuvarlanan top"], ans: 2, exp: "Masada duran kitap hareketsizdir ve net kuvvet sıfırdır." },
+            { q: "7. Batı yönünde 50 N ve Doğu yönünde 50 N uygulanan kutunun hareket durumu ne olur?", opts: ["Batıya hızlanır", "Doğuya hızlanır", "Dengededir (R = 0 N)", "Dairesel döner"], ans: 2, exp: "50 - 50 = 0 N olduğu için cisim dengededir." },
+            { q: "8. Doğu-Batı doğrultusundaki bir kuvvetin yönü hangisi olamaz?", opts: ["Doğu", "Batı", "Kuzey", "Doğu veya Batı"], ans: 2, exp: "Doğu-Batı doğrultusu sadece Doğu veya Batı yönlerini kapsar." },
+            { q: "9. Bir cisme Batı yönünde 8 N, Doğu yönünde 20 N uygulanıyor. Cisim dengelenmiş olsun diye hangi kuvvet eklenmelidir?", opts: ["Doğu yönünde 12 N", "Batı yönünde 12 N", "Batı yönünde 28 N", "Doğu yönünde 20 N"], ans: 1, exp: "Net kuvvet 12 N Doğu'dur. Dengelenmesi için Batı yönünde 12 N eklenmelidir." },
+            { q: "10. Dinamometrelerin içinde bulunan ve esneyerek kuvveti ölçen yapı nedir?", opts: ["Taş", "Demir çubuk", "Yay", "Plastik bant"], ans: 2, exp: "Dinamometreler yayın esneklik özelliğinden yararlanır." },
+            { q: "11. Sabit süratle düz yolda giden bir otomobil için hangisi doğrudur?", opts: ["Dengelenmemiş kuvvetler etkisindedir", "Dengelenmiş kuvvetler etkisindedir", "Net kuvvet sıfırdan büyüktür", "Sürekli hızlanmaktadır"], ans: 1, exp: "Sabit süratli hareket dengelenmiş kuvvetlerin sonucudur." },
+            { q: "12. 3 N, 4 N ve 5 N büyüklüğündeki 3 kuvvet aynı yönlü uygulanırsa bileşke kaç N olur?", opts: ["6 N", "12 N", "2 N", "0 N"], ans: 1, exp: "Aynı yönlü kuvvetler toplanır: 3 + 4 + 5 = 12 N." },
+            { q: "13. Bir cisme Doğu yönünde 40 N, Batı yönünde 15 N ve Batı yönünde 10 N uygulanıyor. Net kuvvet nedir?", opts: ["15 N Doğu", "65 N Doğu", "15 N Batı", "25 N Doğu"], ans: 0, exp: "Batı = 15 + 10 = 25 N. Doğu = 40 N. Net = 40 - 25 = 15 N Doğu." },
+            { q: "14. Aşağıdakilerden hangisi kuvvetin etkisiyle gerçekleşmez?", opts: ["Cismin şeklinin değişmesi", "Cismin kütlesinin artması", "Cismin yavaşlaması", "Cismin yön değiştirmesi"], ans: 1, exp: "Kuvvet cismin kütlesini değiştiremez." },
+            { q: "15. Doğrultuları aynı olan iki kuvvet için hangisi kesinlikle doğrudur?", opts: ["Büyüklükleri eşittir", "Yönleri aynıdır", "Aynı çizgi üzerindedirler", "Bileşkeleri sıfırdır"], ans: 2, exp: "Aynı doğrultuda olmak aynı hizada olmak demektir." },
+            { q: "16. 100 N taşıyabilen bir dinamometreye 120 N asılırsa ne olur?", opts: ["Daha doğru ölçer", "Yayın esneklik özelliği bozulur", "Hicbir şey olmaz", "Kuvveti 0 N gösterir"], ans: 1, exp: "Kapasitesinden fazla kuvvet asılırsa yayın esnekliği kalıcı olarak bozulur." },
+            { q: "17. Balkondan aşağı düşen bir elma için hangisi söylenebilir?", opts: ["Dengelenmiş kuvvetler etkisindedir", "Dengelenmemiş kuvvetler etkisindedir", "Bileşke kuvvet sıfırdır", "Sabit süratle düşer"], ans: 1, exp: "Yerçekimi etkisiyle hızlandığı için dengelenmemiş kuvvetler etkisindedir." },
+            { q: "18. Doğu yönünde 25 N kuvvet uygulanan cismi durdurmak için zıt yönde kaç N gerekir?", opts: ["25 N Batı", "25 N Doğu", "50 N Batı", "0 N"], ans: 0, exp: "Durdurmak için aynı büyüklükte zıt yönde kuvvet gerekir." },
+            { q: "19. Kuzey yönünde 18 N, Güney yönünde 18 N kuvvetin bileşkesi nedir?", opts: ["36 N Kuzey", "36 N Güney", "0 N (Dengede)", "18 N Kuzey"], ans: 2, exp: "Zıt ve eşit kuvvetler birbirini sıfırlar." },
+            { q: "20. Aşağıdakilerden hangisi temas gerektirmeyen bir kuvvettir?", opts: ["Rüzgarın yelkeni itmesi", "Mıknatısın çiviyi çekmesi", "Arabanın fren yapması", "Kutuyu itmek"], ans: 1, exp: "Manyetik kuvvet temas gerektirmez." },
+            { q: "21. Yokuş yukarı yavaşlayan bir araba için bileşke kuvvet hangi yöndedir?", opts: ["Hareket yönünde", "Hareket yönüne zıt", "Yukarı doğru", "Sıfırdır"], ans: 1, exp: "Yavaşlayan cisimlerde bileşke kuvvet hareket yönüne zıttır." },
+            { q: "22. Bir cisme Doğu yönünde 5 N, 10 N ve 15 N üç kuvvet etki ediyor. Bileşke kuvvet nedir?", opts: ["30 N Doğu", "10 N Batı", "30 N Batı", "0 N"], ans: 0, exp: "Hepsi aynı yönlü olduğundan toplanır: 5 + 10 + 15 = 30 N Doğu." },
+            { q: "23. Kuvvetin yönü ve doğrultusu arasındaki ilişki nedir?", opts: ["Aynı şeydir", "Bir doğrultuda iki zıt yön bulunur", "Yön doğrultudan büyüktür", "İlişki yoktur"], ans: 1, exp: "Örneğin Doğu-Batı doğrultusunda hem Doğu hem Batı yönü bulunur." },
+            { q: "24. Ağaçta asılı duran elma için hangisi doğrudur?", opts: ["Yerçekimi yoktur", "Dengelenmiş kuvvetler etkisindedir", "Dengelenmemiş kuvvetler etkisindedir", "Sürekli hızlanır"], ans: 1, exp: "Hareketsiz durduğu için dengelenmiş kuvvetler etkisindedir." },
+            { q: "25. Batı yönünde 40 N etki eden cisme Doğu yönünde 60 N eklenirse yeni bileşke ne olur?", opts: ["20 N Doğu", "100 N Doğu", "20 N Batı", "100 N Batı"], ans: 0, exp: "60 - 40 = 20 N Doğu." },
+            { q: "26. İki çocuk bir kutuyu aynı yönde sırasıyla 20 N ve 30 N ile itiyor. Bileşke nedir?", opts: ["10 N", "50 N", "600 N", "0 N"], ans: 1, exp: "Aynı yönde oldukları için toplanır: 20 + 30 = 50 N." },
+            { q: "27. Halat çekme oyununda iki takım da halatı kıpırdatamıyorsa net kuvvet nedir?", opts: ["Sol takımın kuvveti", "Sağ takımın kuvveti", "0 N", "Toplam kuvvet"], ans: 2, exp: "Kıpırdamadığına göre iki tarafın kuvveti eşittir, net kuvvet 0 N'dur." },
+            { q: "28. Hassas ölçüm yapmak için nasıl bir dinamometre seçilmelidir?", opts: ["Kalın yaylı", "İnce yaylı ve küçük ölçüm aralıklı", "Büyük boylu", "Plastik gövdeli"], ans: 1, exp: "Küçük kuvvetleri hassas ölçmek için ince yaylı dinamometreler seçilir." },
+            { q: "29. Bir cisme Batı yönünde 14 N, Doğu yönünde 6 N etki ediyor. Cisim hangi yönde hareket eder?", opts: ["Doğu", "Batı", "Hareket etmez", "Yukarı"], ans: 1, exp: "Bileşke kuvvet Batı yönünde (14 - 6 = 8 N) olduğundan Batıya hareket eder." },
+            { q: "30. Aşağıdakilerden hangisi temas gerektiren kuvvettir?", opts: ["Yerçekimi kuvveti", "Sürtünme kuvveti", "Elektriksel çekim kuvveti", "Kütle çekim kuvveti"], ans: 1, exp: "Sürtünme kuvveti temas gerektirir." },
+            { q: "31. Doğu yönünde 80 N ile giden cisme Batı yönünde 80 N fren kuvveti uygulanırsa cisim ne yapar?", opts: ["Hızlanır", "Sabit hızla devam eder veya durur", "Anında geriye döner", "Yukarı fırlar"], ans: 1, exp: "Net kuvvet 0 N olur, dengelenmiş kuvvetlerin etkisine girer." },
+            { q: "32. Büyüklüğü 12 N olan kuvvet ile 15 N olan kuvvet zıt yönlü ise bileşke kaç N'dur?", opts: ["27 N", "3 N", "180 N", "0 N"], ans: 1, exp: "Zıt yönlü olduğu için çıkarılır: 15 - 12 = 3 N." },
+            { q: "33. Aşağıdakilerden hangisi kuvvet sembolüdür?", opts: ["m", "v", "F", "R"], ans: 2, exp: "Kuvvet F harfi ile gösterilir." },
+            { q: "34. Bileşke kuvvetin diğer adı nedir?", opts: ["Net Kuvvet", "Özkütle", "Dinamometre", "Sürat"], ans: 0, exp: "Bileşke kuvvet Net Kuvvet (R) olarak da bilinir." },
+            { q: "35. Bir cisme etki eden net kuvvet 0 N ise cismin ivmesi / hızlanması var mıdır?", opts: ["Evet hızlanır", "Hayır, hızlanma yoktur", "Sürekli yön değiştirir", "Bilinemez"], ans: 1, exp: "Net kuvvet 0 ise hız değişimi olmaz." },
+            { q: "36. Doğuya 10 N, Batıya 5 N, Doğuya 15 N uygulanan kutuda net kuvvet nedir?", opts: ["20 N Doğu", "30 N Doğu", "10 N Batı", "5 N Doğu"], ans: 0, exp: "Doğu = 10 + 15 = 25 N. Batı = 5 N. Net = 25 - 5 = 20 N Doğu." },
+            { q: "37. Dinamometredeki uzama miktarı ile uygulanan kuvvet nasıl orantılıdır?", opts: ["Ters orantılıdır", "Doğru orantılıdır", "İlişkisizdir", "Rastgeledir"], ans: 1, exp: "Kuvvet arttıkça yayın uzama miktarı doğru orantılı olarak artar." },
+            { q: "38. Sürati 80 km/h olan sabit hızlı tren için hangisi söylenir?", opts: ["Dengelenmemiş kuvvetler etkisindedir", "Dengelenmiş kuvvetler etkisindedir", "Net kuvvet 80 N'dur", "Durmaktadır"], ans: 1, exp: "Sabit süratli hareket dengelenmiş kuvvetlerin etkisindedir." },
+            { q: "39. Bir cisme etki eden kuvvetlerin bileşkesi en küçük kaç N olabilir?", opts: ["0 N", "1 N", "-10 N", "Sonsuz"], ans: 0, exp: "Kuvvetler birbirini tamamen sıfırlarsa bileşke en az 0 N olur." },
+            { q: "40. Batıya 100 N, Doğuya 40 N olan sisteme dengelenmesi için ne eklenmelidir?", opts: ["Doğuya 60 N", "Batıya 60 N", "Doğuya 140 N", "Batıya 40 N"], ans: 0, exp: "Net kuvvet 60 N Batı'dır. Dengelenmesi için Doğu yönünde 60 N eklenmelidir." }
+        ];
+
+        let activeQuiz = [];
+        let currentQIndex = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+
+        // Dizi Elemanlarını Rastgele Karıştırma Fonksiyonu (Fisher-Yates Shuffle)
+        function shuffleArray(arr) {
+            const array = [...arr];
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Testi Hazırlama ve Soruları Karıştırma
+        function initQuiz() {
+            activeQuiz = shuffleArray(rawQuizData).map(item => {
+                const correctText = item.opts[item.ans];
+                const shuffledOpts = shuffleArray(item.opts);
+                const newAnsIndex = shuffledOpts.indexOf(correctText);
+                return {
+                    q: item.q,
+                    opts: shuffledOpts,
+                    ans: newAnsIndex,
+                    exp: item.exp,
+                    userAnswer: null
+                };
+            });
+            currentQIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            updateStatsUI();
+            loadQuestion(0);
+        }
+
+        function updateStatsUI() {
+            const total = activeQuiz.length;
+            const answeredCount = correctCount + wrongCount;
+            const percentProgress = Math.round((answeredCount / total) * 100);
+            const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+
+            document.getElementById('statPercent').innerText = `%${percentProgress}`;
+            document.getElementById('statCorrect').innerText = correctCount;
+            document.getElementById('statWrong').innerText = wrongCount;
+            document.getElementById('statAccuracy').innerText = `%${accuracy}`;
+            document.getElementById('statPosition').innerText = `${currentQIndex + 1} / ${total}`;
+            document.getElementById('progressBarFill').style.width = `${percentProgress}%`;
+        }
+
+        function loadQuestion(index) {
+            const qData = activeQuiz[index];
+            document.getElementById('questionText').innerText = `${index + 1}. ${qData.q.replace(/^\d+\.\s*/, '')}`;
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            const feedback = document.getElementById('feedbackBox');
+            feedback.style.display = 'none';
+            feedback.className = 'feedback-box';
+
+            qData.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, btn);
+
+                // Eğer bu soru önceden cevaplandıysa
+                if(qData.userAnswer !== null) {
+                    btn.disabled = true;
+                    if(idx === qData.ans) btn.classList.add('correct');
+                    if(idx === qData.userAnswer && idx !== qData.ans) btn.classList.add('wrong');
+                }
+
+                container.appendChild(btn);
+            });
+
+            // Önceden verilmiş cevap için geri bildirimi tekrar göster
+            if(qData.userAnswer !== null) {
+                feedback.style.display = 'block';
+                if(qData.userAnswer === qData.ans) {
+                    feedback.className = 'feedback-box correct';
+                    feedback.innerHTML = `<strong><i class="fa-solid fa-circle-check"></i> TEBRİKLER! DOĞRU CEVAP.</strong><br>${qData.exp}`;
+                } else {
+                    feedback.className = 'feedback-box wrong';
+                    feedback.innerHTML = `<strong><i class="fa-solid fa-circle-xmark"></i> YANLIŞ CEVAP!</strong><br>Doğru Seçenek: <strong>${qData.opts[qData.ans]}</strong><br><em>Açıklama:</em> ${qData.exp}`;
+                }
+            }
+
+            updateStatsUI();
+        }
+
+        function checkAnswer(selectedIdx, btnEl) {
+            const qData = activeQuiz[currentQIndex];
+            if(qData.userAnswer !== null) return; // Zaten cevaplanmışsa tekrar engelle
+
+            qData.userAnswer = selectedIdx;
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            const feedback = document.getElementById('feedbackBox');
+            feedback.style.display = 'block';
+
+            if(selectedIdx === qData.ans) {
+                btnEl.classList.add('correct');
+                feedback.className = 'feedback-box correct';
+                feedback.innerHTML = `<strong><i class="fa-solid fa-circle-check"></i> TEBRİKLER! DOĞRU CEVAP.</strong><br>${qData.exp}`;
+                correctCount++;
+            } else {
+                btnEl.classList.add('wrong');
+                allBtns[qData.ans].classList.add('correct');
+                feedback.className = 'feedback-box wrong';
+                feedback.innerHTML = `<strong><i class="fa-solid fa-circle-xmark"></i> YANLIŞ CEVAP!</strong><br>Doğru Seçenek: <strong>${qData.opts[qData.ans]}</strong><br><em>Açıklama:</em> ${qData.exp}`;
+                wrongCount++;
+            }
+
+            updateStatsUI();
+        }
+
+        function nextQuestion() {
+            if(currentQIndex < activeQuiz.length - 1) {
+                currentQIndex++;
+                loadQuestion(currentQIndex);
+            } else {
+                alert(`Test Tamamlandı!\n\nDoğru Sayısı: ${correctCount}\nYanlış Sayısı: ${wrongCount}\nBaşarı Oranı: %${Math.round((correctCount / activeQuiz.length) * 100)}`);
+            }
+        }
+
+        function prevQuestion() {
+            if(currentQIndex > 0) {
+                currentQIndex--;
+                loadQuestion(currentQIndex);
+            }
+        }
+
+        function resetQuiz() {
+            initQuiz();
+        }
+
+        // Sayfa Yüklendiğinde Başlat
+        window.onload = function() {
+            applyForces();
+            initQuiz();
+        };
+    </script>
+</body>
+</html>
